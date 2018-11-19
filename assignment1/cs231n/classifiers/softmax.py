@@ -29,17 +29,24 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  z = X @ W - reg
-  zexp = np.exp(z)
-  softmax = np.divide(zexp,np.sum(zexp))
-  lsoft = np.log(softmax)*(-1)
-
+  num_classes = W.shape[1]#c
+  num_train = X.shape[0]#n
+  for i in range(num_train):
+    scores = X[i].dot(W) # 1,d * d,c = 1,c # x[i] : 1,d
+    correct_class_score = scores[y[i]] # correct results 1,c
+    eScores = np.exp(scores)
+    eSum = np.sum(eScores)
+    pEach = -np.log(eScores/eSum)
+    loss+=np.sum(pEach)
+  loss /= num_train
+  loss -= reg*np.sum(W*W)
+  #print(loss)
   #print(softmax.shape,z.shape)
   #pass
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
-
+  
   return loss, dW
 
 
@@ -59,7 +66,11 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  scores = X@W
+  eScores= np.exp(scores)
+  eSums  = np.sum(eScores,axis=1)
+  pEach = -np.log(eScores/eSums)
+  loss = np.sum(pEach)-np.sum(W*W)*reg
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
