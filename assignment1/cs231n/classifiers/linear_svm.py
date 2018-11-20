@@ -12,7 +12,7 @@ def svm_loss_naive(W, X, y, reg):
   - W: A numpy array of shape (D, C) containing weights.
   - X: A numpy array of shape (N, D) containing a minibatch of data.
   - y: A numpy array of shape (N,) containing training labels; y[i] = c means
-    that X[i] has label c, where 0 <= c < C.
+    that X[i] has label c, where 0 <= c < C. 
   - reg: (float) regularization strength
 
   Returns a tuple of:
@@ -27,17 +27,34 @@ def svm_loss_naive(W, X, y, reg):
   loss = 0.0
   
   for i in range(num_train):
+    # every loop is a sample with d data
+    # compute the score which is the predicted
+    # label of each data 
     scores = X[i].dot(W) # 1,d * d,c = 1,c # x[i] : 1,d
+    # y[i] is the true label of X[i]
+    # socres[y[i]] stands for we assume that in this sample
+    # the y[i]th data is correct and use it as the standard
+    # of this loop.
+    correct_class_score = scores[y[i]] # Judge standard
 
-    correct_class_score = scores[y[i]] # correct results 1,c
-    
     for j in range(num_classes): 
-      if j == y[i]:
+      '''
+      Process each data in one sample and compute the loss of
+      each data and then sum them as the loss of this sample
+      '''
+      if j == y[i]: # if this is the correct one assumed just doing nothing
         continue
+
+      # if not, compute the difference between each data and the one we assumed correct 
       margin = scores[j] - correct_class_score + 1 # note delta = 1
+
+      # max(0,margin)
       if margin > 0:
         loss += margin
-        #计算j不等于yi的行的梯度
+        #计算j不等于yi的行的梯度差
+        #损失元的倒数
+        #https://github.com/whyscience/CS231n-Note-Translation_CN/blob/master/CS231n%204.2%EF%BC%9A%E6%9C%80%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%8B%EF%BC%89.md
+        #微分分析计算的梯度 （ 不懂 不懂 .jpg
         dW[:, j] += X[i]
         #j=yi时的梯度
         dW[:, y[i]]+=(-X[i])
@@ -46,7 +63,7 @@ def svm_loss_naive(W, X, y, reg):
 
   # Right now the loss is a sum over all training examples, but we want it
   # to be an average instead so we divide by num_train.
-  loss /= num_train
+  loss /= num_train # average loss of every sample
   dW /= num_train
   # Add regularization to the loss.
   loss += reg * np.sum(W * W)
@@ -79,11 +96,18 @@ def svm_loss_vectorized(W, X, y, reg):
   # Implement a vectorized version of the structured SVM loss, storing the    #
   # result in loss.                                                           #
   #############################################################################
-  scores = X.dot(W) # 500,10
+  scores = X.dot(W) # compute every samples once 500,10
   loss = 0.0
   #print(y.reshape((scores.shape[0],-1)).shape)
   
-  margin = scores - scores[np.arange(num_train),y].reshape((num_train,-1)) + 1 
+  # margin = scores - scores[:num_train,y].reshape((500,-1)) + 1 
+  # CONFUSED: what is the difference between np.arange() and [:]
+  correct_class_score = scores[np.arange(num_train),y]
+  correct_class_score = np.reshape(
+    np.repeat(correct_class_score,10),
+    (num_train,num_classes)
+    )
+  margin = scores - correct_class_score +1
   margin[np.arange(num_train),y]=0
   loss = np.sum(margin[margin>0])/num_train+0.5*reg * np.sum(W * W)
   # #print(loss)

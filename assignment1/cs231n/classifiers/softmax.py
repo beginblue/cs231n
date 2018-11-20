@@ -32,21 +32,32 @@ def softmax_loss_naive(W, X, y, reg):
   num_classes = W.shape[1]#c
   num_train = X.shape[0]#n
   for i in range(num_train):
+    #scores we calculated
     scores = X[i].dot(W) # 1,d * d,c = 1,c # x[i] : 1,d
-    correct_class_score = scores[y[i]] # correct results 1,c
-    eScores = np.exp(scores)
+    scores -= np.max(scores)
+    #scores we assumed right --- and we dont need it when using softmax
+    #correct_class_score = scores[y[i]] # correct results 1,c
+    #the exponent of the difference between above
+    eScores = np.exp(scores)#-correct_class_score)
+    #the sum of all exponents 
     eSum = np.sum(eScores)
-    pEach = -np.log(eScores/eSum)
+    #negative log softmax
+    pEach = -np.log(eScores[y[i]]/eSum)
     loss+=np.sum(pEach)
+    dW[:, y[i]] -= X[i]
+    for j in range(num_classes):
+      #print(i,j,num_classes)
+      dW[:, j] += eScores[j] / eSum * X[i]
   loss /= num_train
-  loss -= reg*np.sum(W*W)
+  loss -= 0.5*reg*np.sum(W*W)
+  dW = dW / num_train + reg * W
   #print(loss)
   #print(softmax.shape,z.shape)
   #pass
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
-  
+  #print(W)
   return loss, dW
 
 
@@ -59,18 +70,25 @@ def softmax_loss_vectorized(W, X, y, reg):
   # Initialize the loss and gradient to zero.
   loss = 0.0
   dW = np.zeros_like(W)
-
+  N = W.shape[0]
+  c = X.shape[1]
   #############################################################################
   # TODO: Compute the softmax loss and its gradient using no explicit loops.  #
   # Store the loss in loss and the gradient in dW. If you are not careful     #
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  scores = X@W
+  scores = X.dot(W)
+  scores-= np.max(scores,axis=1)
   eScores= np.exp(scores)
-  eSums  = np.sum(eScores,axis=1)
-  pEach = -np.log(eScores/eSums)
-  loss = np.sum(pEach)-np.sum(W*W)*reg
+  eSum   = np.sum(eScores,axis=1)
+  pEach  =-np.log(eScores[:,y]/eSum)
+  loss  += (np.sum(pEach))/N
+  loss  +=-0.5*reg*np.sum(W*W)
+  dW[:,y]-=X
+  dW    +=eScores/eSum*X
+  dW    /= N
+  dW    +=-reg*W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
