@@ -70,25 +70,24 @@ def softmax_loss_vectorized(W, X, y, reg):
   # Initialize the loss and gradient to zero.
   loss = 0.0
   dW = np.zeros_like(W)
-  N = W.shape[0]
-  c = X.shape[1]
+  N = X.shape[0]
+  c = W.shape[1]
   #############################################################################
   # TODO: Compute the softmax loss and its gradient using no explicit loops.  #
   # Store the loss in loss and the gradient in dW. If you are not careful     #
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  scores = X.dot(W)
-  scores-= np.max(scores,axis=1)
-  eScores= np.exp(scores)
-  eSum   = np.sum(eScores,axis=1)
-  pEach  =-np.log(eScores[:,y]/eSum)
+  scores = X.dot(W) # n,c
+  delta  = np.repeat(np.max(scores,axis=1),10) #n,1
+  scores-= np.reshape(delta,(500,-1))# n,c
+  eScores= np.exp(scores)# n,c
+  eSum   = np.sum(eScores,axis=1) # n,1
+  pEach  =-np.log(eScores[:,y]/eSum) # 
   loss  += (np.sum(pEach))/N
   loss  +=-0.5*reg*np.sum(W*W)
-  dW[:,y]-=X
-  dW    +=eScores/eSum*X
-  dW    /= N
-  dW    +=-reg*W
+  eSum10 = np.reshape(np.repeat(eSum,10),(N,-1))
+  
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
