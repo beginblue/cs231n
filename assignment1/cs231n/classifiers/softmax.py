@@ -44,10 +44,10 @@ def softmax_loss_naive(W, X, y, reg):
     #negative log softmax
     pEach = -np.log(eScores[y[i]]/eSum)
     loss+=np.sum(pEach)
-    dW[:, y[i]] -= X[i]
-    for j in range(num_classes):
+    dW[:, y[i]] -= X[i] # d,1 -=d,1
+    for j in range(num_classes): #c
       #print(i,j,num_classes)
-      dW[:, j] += eScores[j] / eSum * X[i]
+      dW[:, j] += eScores[j] / eSum * X[i] # (1d += 1/1 * 1d)*c
   loss /= num_train
   loss -= 0.5*reg*np.sum(W*W)
   dW = dW / num_train + reg * W
@@ -79,15 +79,22 @@ def softmax_loss_vectorized(W, X, y, reg):
   # regularization!                                                           #
   #############################################################################
   scores = X.dot(W) # n,c
-  delta  = np.repeat(np.max(scores,axis=1),10) #n,1
-  scores-= np.reshape(delta,(500,-1))# n,c
+  scores-= np.max(scores,axis=1).reshape(N,1)
+  # delta  = np.repeat(np.max(scores,axis=1),10) #n,1
+  # scores-= np.reshape(delta,(500,-1))# n,c
   eScores= np.exp(scores)# n,c
   eSum   = np.sum(eScores,axis=1) # n,1
-  pEach  =-np.log(eScores[:,y]/eSum) # 
+  pEach  =-np.log(eScores[range(N),y]/eSum) # 
   loss  += (np.sum(pEach))/N
   loss  +=-0.5*reg*np.sum(W*W)
-  eSum10 = np.reshape(np.repeat(eSum,10),(N,-1))
-  
+ 
+
+  counts = eScores / eSum.reshape(N,1)
+  counts[range(N), y] -= 1
+  dW = np.dot(X.T, counts)
+
+  dW = dW / N + reg * W
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
