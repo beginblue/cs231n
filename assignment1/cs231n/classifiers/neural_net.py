@@ -75,12 +75,12 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-#     H1 = X @ W1 + b1 # n,h
-#     H1[H1<=0] = 0    # n,h
+    # H1 = X @ W1 + b1 # n,h
+    # H1[H1<=0] = 0    # n,h
     H1 = np.maximum(0,np.dot(X,W1)+b1)
-    #H1-= 2*reg*np.sum(W1*W1)
-    scores = np.dot(H1,W2) +b2 #H1 @ W2 + b2 # n,c 
-    H2 = scores.copy()
+    #H1-= 0.5*reg*np.sum(W1*W1)
+    scores = H1 @ W2 + b2#np.dot(H1,W2) +b2 #H1 @ W2 + b2 # n,c 
+    #H2 = scores.copy()
     # just scores but not loss
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -107,10 +107,10 @@ class TwoLayerNet(object):
     # loss   =-np.sum(np.log(margin))
     # loss   = loss / N + reg * np.sum(W2*W2)+reg*np.sum(W1*W1)
     ###new version###
-    H2 -= np.max(H2,axis=1,keepdims=True)
-    H2exp = np.exp(H2)
+    scores -= np.max(scores,axis=1,keepdims=True)
+    H2exp = np.exp(scores)
     H2eSum = np.sum(H2exp,axis=1).reshape((-1,1))
-    loss = -np.sum(H2[range(N),y]) + np.sum(np.log(H2eSum))
+    loss = -np.sum(scores[range(N),y]) + np.sum(np.log(H2eSum))
     loss/= N
     loss+= 0.5*reg*np.sum(W2*W2)+0.5*reg*np.sum(W1*W1)
     ###someone's solution###
@@ -186,7 +186,7 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      index = np.random.choice(len(X),batch_size,replace=True)
+      index = np.random.choice(num_train,batch_size,replace=True)
       X_batch = X[index]
       y_batch = y[index]
       #########################################################################
